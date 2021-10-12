@@ -15,7 +15,7 @@ The code for training and evaluating of LaLaLoc can be found [here](https://gith
 
 ## Paper
 
-A copy of the paper can be found [here (local)](resources/paper.pdf) or [here (CVF)](https://openaccess.thecvf.com/content/ICCV2021/papers/Howard-Jenkins_LaLaLoc_Latent_Layout_Localisation_in_Dynamic_Unvisited_Environments_ICCV_2021_paper.pdf)
+A copy of the paper can be found <link rel="prefetch" href="https://openaccess.thecvf.com/content/ICCV2021/papers/Howard-Jenkins_LaLaLoc_Latent_Layout_Localisation_in_Dynamic_Unvisited_Environments_ICCV_2021_paper.pdf">here</link>
 
 ## Citation
 
