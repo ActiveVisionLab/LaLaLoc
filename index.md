@@ -11,7 +11,7 @@ We present LaLaLoc to localise in environments without the need for prior visita
 
 ## Code
 
-The code for reproducing results in the paper can be obtained from the [GitHub repository](https://github.com/ActiveVisionLab/LaLaLoc).
+The code for training and evaluating of LaLaLoc can be found [here](https://github.com/ActiveVisionLab/LaLaLoc).
 
 ## Citation
 
