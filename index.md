@@ -3,7 +3,7 @@ layout: index
 title: "LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments"
 ---
 
-[](images/overview.png)
+![Overview Image](images/overview.png)
 
 This is the landing page for paper **LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments**.
 

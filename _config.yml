@@ -1,5 +1,5 @@
 title: "LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments"
-description: A decomposition method which allows for simultaneous training of an entire search space of group convolution architectures.
+description: A method to localise in dynamic and unvisited environments through latent representations of room layout.
 url: lalaloc.active.vision
 signoff: Henry Howard-Jenkins
 
