@@ -1,5 +1,5 @@
 <link href='/images/fav.png' rel='shortcut icon'>
-<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css' />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css' />
 <link href='/stylesheets/style.css' rel='stylesheet' type='text/css' />
 <link href='/stylesheets/syntax.css' rel='stylesheet' type='text/css' />
 <link href='/stylesheets/responsive.css' rel='stylesheet' type='text/css' />
@@ -11,16 +11,16 @@
 <!-- - -->
 <meta content='width=device-width, initial-scale=1.0, user-scalable=no' name='viewport'>
 <meta content='text/html; charset=utf-8' http-equiv='content-type' />
-<meta content="http://muan.co/images/og.png" property="og:image" />
+<meta content="https://muan.co/images/og.png" property="og:image" />
 <meta content="{{ site.facebook_appid }}" property="fb:app_id" />
 {% if page.date %}
-  <meta content='{{ site.url }}{{ page.url }}' property='og:url' />
-  <meta content="{{ page.content | strip_html | strip_newlines | truncate: 120 }}" property='og:description' />
-  <meta content="article" property="og:type" />
+<meta content='{{ site.url }}{{ page.url }}' property='og:url' />
+<meta content="{{ page.content | strip_html | strip_newlines | truncate: 120 }}" property='og:description' />
+<meta content="article" property="og:type" />
 {% else %}
-  <meta content='{{ site.url }}' property='og:url' />
-  <meta content="{{ site.description }}" property='og:description' />
-  <meta content="blog" property="og:type" />
+<meta content='{{ site.url }}' property='og:url' />
+<meta content="{{ site.description }}" property='og:description' />
+<meta content="blog" property="og:type" />
 {% endif %}
 <!-- - -->
 {% include ga.html %}
