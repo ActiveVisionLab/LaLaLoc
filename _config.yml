@@ -1,0 +1,14 @@
+title: "LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments"
+description: A decomposition method which allows for simultaneous training of an entire search space of group convolution architectures.
+url: lalaloc.active.vision
+signoff: Henry Howard-Jenkins
+
+links:
+  - name: <strong>AVLCode</strong>
+    url: https://code.active.vision
+    external: true
+  - name: <strong>GitHub</strong>
+    url: https://github.com/ActiveVisionLab/LaLaLoc
+    external: true
+
+permalink: pretty
