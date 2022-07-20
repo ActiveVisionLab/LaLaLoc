@@ -105,11 +105,11 @@ python train.py -c configs/image_branch.yaml -t [path/to/checkpoint] \
 }
 ```
 ```
-@article{howard2021lalaloc,
-  title={LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments},
-  author={Howard-Jenkins, Henry and Ruiz-Sarmiento, Jose-Raul and Prisacariu, Victor Adrian},
-  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
+@article{howard2022lalaloc++,
+  title={LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments},
+  author={Howard-Jenkins, Henry and Prisacariu, Victor Adrian},
+  booktitle={Proceedings of the European Conference on Computer Vision},
   pages={},
-  year={2021}
+  year={2022}
 }
 ```
