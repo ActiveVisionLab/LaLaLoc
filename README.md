@@ -1,17 +1,29 @@
-# LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments
+# Overview
+
+This is the code repository for LaLaLoc and LaLaLoc++
+
+
+* We currently provide training and evaluation code for LaLaLoc, for both the Image-to-Layout and Layout-to-Layout configurations. 
+
+* Code for LaLaLoc++ is coming soon!
+
+
+## LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments
+**Henry Howard-Jenkins and Victor Adrian Prisacariu**
+**(ECCV 2022)**
+
+[Project Page](https://lalalocpp.active.vision) | Paper(coming soon!)
+
+![LaLaLoc++ Overview](assets/lll++_overview.png)
+
+## LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments
 **Henry Howard-Jenkins, Jose-Raul Ruiz-Sarmiento and Victor Adrian Prisacariu**
 **(ICCV 2021)**
 
-Project Page (coming soon!) | [Paper](https://arxiv.org/abs/2104.09169) | Presentation (coming soon!)
+[Project Page](https://lalaloc.active.vision) | [Paper](https://arxiv.org/abs/2104.09169)
 
 ![LaLaLoc Overview](assets/overview.png)
 
-# Overview
-
-This is the code repository for the ICCV 2021 paper: *LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments*
-
-
-We currently provide training and evaluation code for LaLaLoc, for both the Image-to-Layout and Layout-to-Layout configurations.
 
 # Setup
 ## Installing Requirements
@@ -82,7 +94,16 @@ python train.py -c configs/image_branch.yaml -t [path/to/checkpoint] \
     TEST.POSE_SAMPLE_STEP 500
 ```
 
-# Citation
+# Citations
+```
+@article{howard2021lalaloc++,
+  title={LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments},
+  author={Howard-Jenkins, Henry and Prisacariu, Victor Adrian},
+  booktitle={Proceedings of the European Conference on Computer Vision},
+  pages={},
+  year={2022}
+}
+```
 ```
 @article{howard2021lalaloc,
   title={LaLaLoc: Latent Layout Localisation in Dynamic, Unvisited Environments},
