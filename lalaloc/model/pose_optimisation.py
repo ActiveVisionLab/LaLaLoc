@@ -9,7 +9,7 @@ class PoseConvergenceChecker:
         self.converge_count = 0
         self.converge_threshold = config.POSE_REFINE.CONVERGANCE_THRESHOLD
         self.converge_patience = config.POSE_REFINE.CONVERGANCE_PATIENCE
-    
+
     def has_converged(self, current_loss, current_pose):
         delta = 0
         if current_loss < self.best_loss:
@@ -20,7 +20,7 @@ class PoseConvergenceChecker:
             self.converge_count += 1
         else:
             self.converge_count = 0
-        
+
         return self.converge_count > self.converge_patience
 
 
@@ -69,9 +69,7 @@ def render_at_pose(camera, objects, vertices, pose):
         objects[i].vertices = vertices[i] - pose * 1000
 
     scene = pyredner.Scene(camera=camera, objects=objects)
-    img = pyredner.render_g_buffer(
-        scene, [pyredner.channels.depth], device=pose.device
-    )
+    img = pyredner.render_g_buffer(scene, [pyredner.channels.depth], device=pose.device)
     img = img.flip(dims=[1])
     return img.squeeze(2)
 

@@ -1,4 +1,4 @@
-OUT_DIR: "./runs/l2l/layout_branch"
+OUT_DIR: "./runs/lalaloc/layout_branch"
 SYSTEM:
   NUM_GPUS: 2
   DISTRIBUTED_BACKEND: "ddp"

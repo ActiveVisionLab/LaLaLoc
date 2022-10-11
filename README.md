@@ -1,12 +1,12 @@
 # Overview
 
-This is the code repository for LaLaLoc and LaLaLoc++
+This is the code repository for LaLaLoc and LaLaLoc++.
 
 
-* We currently provide training and evaluation code for LaLaLoc, for both the Image-to-Layout and Layout-to-Layout configurations. 
-
-* Code for LaLaLoc++ is coming soon!
-
+* We currently provide:
+  * Training and evaluation code for LaLaLoc, for both the Image-to-Layout and Layout-to-Layout configurations. 
+  * Training and evaluation code for LaLaLoc++'s plan and image branches.
+  * Pretrained models for all the provided configs.
 
 ## LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments
 **Henry Howard-Jenkins and Victor Adrian Prisacariu**
@@ -49,23 +49,35 @@ conda install -c pytorch3d pytorch3d==0.4.0
 ```
 * Install Pymesh
     * Follow build and install instructions: https://github.com/PyMesh/PyMesh
-* Install Redner:
+* Install Redner and OpenCV:
 ```
-pip install redner-gpu
+pip install redner-gpu opencv-python
+```
+* Install Scikit-Learn:
+```
+conda install -c anaconda scikit-learn
 ```
 
 ## Download the Structured3D Dataset
 * Information provided here: https://github.com/bertjiazheng/Structured3D
 
 # Usage
-### Layout Branch
-* Train layout branch
+### Layout/Plan Branch
+* Train LaLaLoc's layout branch or LaLaLoc++'s plan branch.
 ```
+# LaLaLoc layout branch
 python train.py -c configs/layout_branch.yaml \
     DATASET.PATH [path/to/dataset]
 ```
-* Test layout branch:
+```
+# LaLaLoc++ plan branch
+python train.py -c configs/lalaloc_pp/plan_branch.yaml \
+    DATASET.PATH [path/to/dataset]
+```
+* Test LaLaLoc's layout branch:
     * Perform evaluation of the trained layout branch on a sampled grid of 0.5m with VDR and LPO.
+    
+    Note: Testing LaLaLoc++'s plan branch isn't particularly meaningful.
 ```
 python train.py -c configs/layout_branch.yaml -t [path/to/checkpoint] \
     DATASET.PATH [path/to/dataset] \
@@ -76,16 +88,24 @@ python train.py -c configs/layout_branch.yaml -t [path/to/checkpoint] \
 ```
 
 ### Image Branch
-* Train image branch
-    * Perform training of the image branch with the layout branch from a previous training run.
+* Train the image branch for LaLaLoc and LaLaLoc++
+    * Perform training of the image branch with the layout/plan branch from a previous training run.
 ```
+# LaLaLoc image branch
 python train.py -c configs/image_branch.yaml \
     DATASET.PATH [path/to/dataset] \
     TRAIN.SOURCE_WEIGHTS [path/to/layout_branch_checkpoint]
 ```
+```
+# LaLaLoc++ image branch
+python train.py -c configs/lalaloc_pp/image_branch.yaml \
+    DATASET.PATH [path/to/dataset] \
+    TRAIN.SOURCE_WEIGHTS [path/to/plan_branch_checkpoint]
+```
 
 * Test image branch
 ```
+# LaLaLoc image branch
 python train.py -c configs/image_branch.yaml -t [path/to/checkpoint] \
     DATASET.PATH [path/to/dataset] \
     SYSTEM.NUM_GPUS 1 \
@@ -93,10 +113,16 @@ python train.py -c configs/image_branch.yaml -t [path/to/checkpoint] \
     TEST.LATENT_POSE_OPTIMISATION True \
     TEST.POSE_SAMPLE_STEP 500
 ```
+```
+# LaLaLoc++ image branch
+python train.py -c configs/lalaloc_pp/transfomer_image_branch.yaml -t [path/to/checkpoint] \
+    DATASET.PATH [path/to/dataset] \
+    SYSTEM.NUM_GPUS 1 \
+```
 
 # Citations
 ```
-@article{howard2021lalaloc++,
+@article{howard2022lalaloc++,
   title={LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments},
   author={Howard-Jenkins, Henry and Prisacariu, Victor Adrian},
   booktitle={Proceedings of the European Conference on Computer Vision},
@@ -105,11 +131,11 @@ python train.py -c configs/image_branch.yaml -t [path/to/checkpoint] \
 }
 ```
 ```
-@article{howard2022lalaloc++,
-  title={LaLaLoc++: Global Floor Plan Comprehension for Layout Localisation in Unvisited Environments},
-  author={Howard-Jenkins, Henry and Prisacariu, Victor Adrian},
-  booktitle={Proceedings of the European Conference on Computer Vision},
-  pages={},
-  year={2022}
+@inproceedings{howard2021lalaloc,
+  title={Lalaloc: Latent layout localisation in dynamic, unvisited environments},
+  author={Howard-Jenkins, Henry and Ruiz-Sarmiento, Jose-Raul and Prisacariu, Victor Adrian},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  pages={10107--10116},
+  year={2021}
 }
 ```

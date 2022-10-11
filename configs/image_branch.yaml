@@ -1,4 +1,4 @@
-OUT_DIR: "./runs/ifl/image_branch"
+OUT_DIR: "./runs/lalaloc/image_branch"
 SYSTEM:
   NUM_GPUS: 2
   DISTRIBUTED_BACKEND: "ddp"

@@ -1,29 +1,36 @@
 import os
 import random
 import warnings
+from math import dist
 
 import numpy as np
 import torch
+import torchvision.transforms.functional as tvf
 from PIL import Image
 from pytorch3d.structures import Pointclouds
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from .transform import build_transform
-from .load import prepare_geometry_from_annos, load_scene_annos
-from .split import scenes_split
 from ..utils.chamfer import chamfer
-from ..utils.projection import project_depth_to_pc, project_depth_to_pc_batched, projects_onto_floor
-from ..utils.render import render_scene_batched, render_semantic_batched, render_scene, render_semantics
-
-
-def random_rotation_augment(layout_pano, layouts):
-    rotation = random.uniform(0, 1)
-    width = layout_pano.shape[-1]
-    shift = int(width // rotation)
-    layout_pano = torch.roll(layout_pano, shift, -1)
-    layouts = torch.roll(layouts, shift, -1)
-    return layout_pano, layouts
+from ..utils.floorplan import pose_to_pixel_loc, sample_locs
+from ..utils.projection import (
+    project_depth_to_pc,
+    project_depth_to_pc_batched,
+    projects_onto_floor,
+)
+from ..utils.render import (
+    render_scene,
+    render_scene_batched,
+    render_semantic_batched,
+    render_semantics,
+)
+from .load import (
+    create_floorplan_from_annos,
+    load_scene_annos,
+    prepare_geometry_from_annos,
+)
+from .split import scenes_split
+from .transform import build_transform
 
 
 def sample_xy_displacement(max_dist=1, min_dist=0):
@@ -34,10 +41,15 @@ def sample_xy_displacement(max_dist=1, min_dist=0):
     return np.array([x, y, 0]) * 1000
 
 
-def load_scene_data(scene_ids, root_path, for_visualisation=False):
+def load_scene_data(
+    scene_ids, root_path, for_visualisation=False, pix_per_mm=0.025, min_factor=32
+):
     scenes = []
     for scene_id in tqdm(scene_ids):
         annos = load_scene_annos(root_path, scene_id)
+        floorplan, plan_params = create_floorplan_from_annos(
+            annos, scene_id, pix_per_mm, min_factor
+        )
         scene_geometry, floor_planes, limits = prepare_geometry_from_annos(
             annos, for_visualisation=for_visualisation
         )
@@ -64,6 +76,8 @@ def load_scene_data(scene_ids, root_path, for_visualisation=False):
                 "rooms": scene_rooms,
                 "floor_planes": floor_planes,
                 "limits": limits,
+                "floorplan": floorplan,
+                "floorplan_params": plan_params,
             }
         )
     return scenes
@@ -75,7 +89,13 @@ class Structured3DPlans(Dataset):
     ):
         scene_ids = scenes_split(split)
         dataset_path = config.DATASET.PATH
-        self.scenes = load_scene_data(scene_ids, dataset_path, visualise)
+        self.scenes = load_scene_data(
+            scene_ids,
+            dataset_path,
+            visualise,
+            config.DATASET.PIX_PER_MM,
+            config.DATASET.FLOORPLAN_DIVISIBLE_BY,
+        )
         self.is_train = split == "train"
         self.visualise = visualise
         self.transform = build_transform(config, self.is_train)
@@ -93,6 +113,7 @@ class Structured3DPlans(Dataset):
         self.furniture_levels = furniture_levels
         self.lighting_levels = lighting_levels
         self.compute_gt_dist = config.TRAIN.COMPUTE_GT_DIST
+        self.compute_gt_dist_test = config.TEST.COMPUTE_GT_DIST
         self.config = config
 
     def __len__(self):
@@ -104,6 +125,8 @@ class Structured3DPlans(Dataset):
         rooms = data["rooms"]
         floor = data["floor_planes"]
         limits = data["limits"]
+        floorplan = data["floorplan"]
+        floorplan_params = data["floorplan_params"]
 
         if self.is_train:
             # randomly select a room from the scene
@@ -183,7 +206,10 @@ class Structured3DPlans(Dataset):
             pano_layouts = torch.stack(
                 [self.layout_transform(l) for l in pano_layouts], dim=0
             )
-            distances = torch.stack(distances_all)
+            if self.compute_gt_dist_test:
+                distances = torch.stack(distances_all)
+            else:
+                distances = []
         pano_semantics = np.stack(pano_semantics)
 
         sampled_depths = np.stack(sampled_layouts)
@@ -197,13 +223,11 @@ class Structured3DPlans(Dataset):
         sampled_room_idxs = torch.Tensor([r for _, r in sampled_poses_and_rooms])
 
         if self.is_train:
-            if self.augment:
-                pano_layouts, sampled_layouts = random_rotation_augment(
-                    pano_layouts, sampled_layouts
-                )
             # geometry doesn't support batching but isn't used in training
             geometry = []
             floor = []
+
+        floorplan = tvf.to_tensor(floorplan)
 
         return {
             "panorama": panorama,
@@ -220,6 +244,8 @@ class Structured3DPlans(Dataset):
             "distances": distances,
             "geometry": geometry,
             "floor": floor,
+            "floorplan": floorplan,
+            "floorplan_params": floorplan_params,
         }
 
     def _process_room(
@@ -231,8 +257,8 @@ class Structured3DPlans(Dataset):
         pointcloud_pano = torch.Tensor(project_depth_to_pc(self.config, layout_pano))
         pointclouds_pano = Pointclouds([pointcloud_pano,] * len(pointclouds_layouts))
 
-        if (self.is_train and self.compute_gt_dist) or not (
-            self.visualise and not self.compute_gt_dist
+        if (self.is_train and self.compute_gt_dist) or (
+            not self.is_train and self.compute_gt_dist_test
         ):
             distances = chamfer(pointclouds_pano, pointclouds_layouts)
         else:
@@ -328,3 +354,67 @@ class Structured3DPlans(Dataset):
         layout_pano = render_scene(self.config, geometry[room_idx], pose_pano)
         semantics_pano = render_semantics(self.config, geometry[room_idx], pose_pano)
         return pose_pano, layout_pano, semantics_pano, room_idx
+
+
+class TargetEmbeddingDataset(Structured3DPlans):
+    def __init__(self, encoder, config, split="train", visualise=False, device="cpu:0"):
+        super().__init__(config, split=split, visualise=visualise)
+
+        with torch.no_grad():
+            encoder.eval()
+            for scene in tqdm(self.scenes):
+                floorplan = scene["floorplan"]
+                floorplan_params = scene["floorplan_params"]
+                scale = torch.tensor([floorplan_params["scale"]])
+                shift = torch.tensor(floorplan_params["shift"])
+                plan_height = floorplan_params["h"]
+                plan_width = floorplan_params["w"]
+                floorplan = floorplan[:plan_height, :plan_width]
+
+                floorplan = tvf.to_tensor(floorplan).to(device).unsqueeze(0)
+                plan_embed = encoder(floorplan).cpu()
+
+                subsample_x = self.config.TEST.SUBSAMPLE_PLAN_X
+                if subsample_x > 1:
+                    plan_embed = plan_embed[:, :, ::subsample_x, ::subsample_x]
+                    floorplan = floorplan[:, :, ::subsample_x, ::subsample_x]
+                    scale = scale / subsample_x
+
+                query_poses = []
+                rooms = scene["rooms"]
+                for room in rooms:
+                    query_poses.append(room["pose"])
+                query_poses = torch.Tensor(np.stack(query_poses))
+                query_locs = pose_to_pixel_loc(query_poses.unsqueeze(0), scale, shift)
+
+                target_embeddings = sample_locs(
+                    plan_embed, query_locs, normalise=self.config.MODEL.NORMALISE_SAMPLE
+                ).squeeze(0)
+
+                scene["embeddings"] = target_embeddings
+
+    def __getitem__(self, idx):
+        data = self.scenes[idx]
+        rooms = data["rooms"]
+        embeddings = data["embeddings"]
+
+        room_idx = random.randrange(0, len(rooms))
+        room = rooms[room_idx]
+
+        furniture = random.choice(self.furniture_levels)
+        lighting = random.choice(self.lighting_levels)
+        panorama_path = room["panorama"].format(furniture, lighting)
+        # sometimes the panorama image can be get corrupted
+        # if this happens, reextract the relevant zip file
+        try:
+            panorama = Image.open(panorama_path).convert("RGB")
+        except Exception as e:
+            print(panorama_path)
+            print(e)
+
+        panorama = self.transform(panorama)
+        embedding = embeddings[room_idx]
+        return {
+            "panorama": panorama,
+            "target_embedding": embedding,
+        }

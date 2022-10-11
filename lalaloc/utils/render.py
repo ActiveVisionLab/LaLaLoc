@@ -1,9 +1,9 @@
-from pyredner import scene
-import torch
-import pyredner
 import numpy as np
+import pyredner
+import torch
+from pyredner import scene
 
-device = torch.device("cpu")
+device = torch.device("cpu:0")
 
 pyredner.set_print_timing(False)
 pyredner.set_device(device)

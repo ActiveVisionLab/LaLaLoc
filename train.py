@@ -5,8 +5,12 @@ from pytorch_lightning import loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from lalaloc.config import get_cfg_defaults, parse_args
-from lalaloc.model import ImageFromLayout, Layout2LayoutDecode
-
+from lalaloc.model import (
+    FloorPlanUnetImage,
+    FloorPlanUnetLayout,
+    ImageFromLayout,
+    Layout2LayoutDecode,
+)
 
 if __name__ == "__main__":
     args = parse_args()
@@ -26,14 +30,24 @@ if __name__ == "__main__":
     else:
         resume_path = None
 
-    if config.MODEL.QUERY_TYPE == "image":
-        model = ImageFromLayout(config)
-    elif config.MODEL.QUERY_TYPE == "layout":
-        model = Layout2LayoutDecode(config)
-    else:
-        raise NotImplementedError(
-            "The query type, {}, isn't recognised.".format(config.MODEL.QUERY_TYPE)
-        )
+    if config.MODEL.TYPE == "lalaloc":
+        if config.MODEL.QUERY_TYPE == "image":
+            model = ImageFromLayout(config)
+        elif config.MODEL.QUERY_TYPE == "layout":
+            model = Layout2LayoutDecode(config)
+        else:
+            raise NotImplementedError(
+                "The query type, {}, isn't recognised.".format(config.MODEL.QUERY_TYPE)
+            )
+    elif config.MODEL.TYPE == "lalaloc++":
+        if config.MODEL.QUERY_TYPE == "image":
+            model = FloorPlanUnetImage(config)
+        elif config.MODEL.QUERY_TYPE == "layout":
+            model = FloorPlanUnetLayout(config)
+        else:
+            raise NotImplementedError(
+                "The query type, {}, isn't recognised.".format(config.MODEL.QUERY_TYPE)
+            )
 
     logger = loggers.TensorBoardLogger(config.OUT_DIR)
     checkpoint_callback = ModelCheckpoint(save_top_k=-1,)

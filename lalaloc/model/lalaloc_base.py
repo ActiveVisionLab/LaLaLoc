@@ -1,23 +1,22 @@
-from lalaloc.utils.render import render_scene_batched
-from lalaloc.utils.vogel_disc import sample_vogel_disc
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 from torch.utils.data import DataLoader
 
+from lalaloc.utils.render import render_scene_batched
+from lalaloc.utils.vogel_disc import sample_vogel_disc
 
 from ..data.dataset import Structured3DPlans
+from ..data.transform import build_transform
 from ..utils.eval import recall_at_n
 from ..utils.projection import projects_onto_floor
-from ..data.transform import build_transform
 from .modules import LayoutModule, PanoModule
 from .pose_optimisation import (
     PoseConvergenceChecker,
-    init_objects_at_pose,
     init_camera_at_origin,
+    init_objects_at_pose,
     init_optimiser,
     render_at_pose,
 )
@@ -27,7 +26,9 @@ def build_dataloader(config, split):
     is_train = split == "train"
 
     batch_size = config.TRAIN.BATCH_SIZE if is_train else None
-    num_workers = config.SYSTEM.NUM_WORKERS if is_train else 0
+    num_workers = (
+        config.SYSTEM.NUM_WORKERS if is_train or not config.TEST.COMPUTE_GT_DIST else 0
+    )
 
     dataset = Structured3DPlans(config, split)
     dataloader = DataLoader(
@@ -308,6 +309,11 @@ class Image2LayoutBase(pl.LightningModule):
         median_optimised_error = torch.median(optimised_errors).item()
         median_oracle_error = torch.median(oracle_errors).item()
 
+        threshold_1cm = (optimised_errors < 10).float().mean().item()
+        threshold_5cm = (optimised_errors < 50).float().mean().item()
+        threshold_10cm = (optimised_errors < 100).float().mean().item()
+        threshold_100cm = (optimised_errors < 1000).float().mean().item()
+
         if self.config.TEST.METRIC_DUMP:
             data = {
                 "scene_idxs": scene_idxs,
@@ -331,6 +337,10 @@ class Image2LayoutBase(pl.LightningModule):
             "{}/median_refined_error".format(log_key): median_refined_error,
             "{}/median_optimised_error".format(log_key): median_optimised_error,
             "{}/median_oracle_error".format(log_key): median_oracle_error,
+            "{}/threshold_1cm".format(log_key): threshold_1cm,
+            "{}/threshold_5cm".format(log_key): threshold_5cm,
+            "{}/threshold_10cm".format(log_key): threshold_10cm,
+            "{}/threshold_100cm".format(log_key): threshold_100cm,
         }
         return {"test_loss": 1 - layout_r_at_1, "log": stats_to_log}
 
